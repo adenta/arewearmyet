@@ -16,10 +16,9 @@ reference for the board, not a finished or upstream-ready tree.
 - HP-only wiring (Quartz panel, backlight, GPIO and USB connector layout) was not carried over.
   Mica and Quartz share the platform but are wired differently. The HP tree is not expected to
   work unmodified on the Dell.
-- The file is copied byte for byte from the one that was compiled and booted. Its SHA-256 is
-  `caada5d47c7038061c836a25c49e25eaa6f802d8d31948f8c9254bbc93997573`. Comments from the
-  generator were not kept, and the SPDX line appears twice. That is cosmetic, and it is left in
-  so the hash still matches.
+- It targets Linux 7.3. That release stopped reserving twelve regions in `hamoa.dtsi` that
+  UEFI's memory map covers (upstream commit 7d240c5dd34a). The Mica boots through Depthcharge
+  without that map, so the tree reserves the same memory itself as it did on 7.2.11.
 
 ## Licence
 
@@ -29,9 +28,8 @@ terms aren't established.
 
 ## What it needs
 
-- It builds against the device tree includes in Linux 7.2.11 (`hamoa.dtsi`,
-  `hamoa-pmics.dtsi`). The HP patches don't change those files, but the kernel needs the HP
-  driver patches to boot on these machines. Those cover the SPI chip-select fix, the eUSB2
+- It builds against the device tree includes in Linux 7.3 (`hamoa.dtsi`,
+  `hamoa-pmics.dtsi`). The kernel also needs the HP driver patches to boot on these machines. Those cover the SPI chip-select fix, the eUSB2
   repeater reset, the eDP panel enable GPIO, the SMMU identity domain, the remoteproc domain
   fallback, ChromeOS EC over USB, cros-ec GPIO probing and the PCIe GDSC retention changes.
 - The laptop boots it through Depthcharge as an Android boot image v4, at EL2, with the tree in
@@ -49,18 +47,15 @@ terms aren't established.
 
 ## What has been checked
 
-- Recompiled with `cpp` and `dtc -@` against the Linux 7.2.11 includes, it gives a DTB with
-  SHA-256 `c8fbf1b0d7169d6886a15b8975a73123d9877eca52dfb1de9834ba6b1345fcaf`. That is the same
-  DTB that was packed, LZ4-compressed, as entry 0 of the `dtbo` image the USB test builds booted.
-  `dtc` gives 30 `unique_unit_address` warnings, all on the shared QUP i2c/spi/serial nodes in
-  `hamoa.dtsi` and none in this file.
+- It compiles with `cpp` and `dtc -@` against the Linux 7.3 includes. `dtc` gives 30
+  `unique_unit_address` warnings, all on the shared QUP i2c/spi/serial nodes in `hamoa.dtsi`
+  and none in this file.
 - On the laptop, an earlier build that started the ADSP early ran for a 120 s observation with
   the USB root filesystem mounted read-only.
 - Later V20/V21 builds reach an interactive Omarchy/Hyprland desktop: the tester saw pixels,
   moved the cursor and typed commands. The backlight is still extremely dim / apparently off;
   software brightness values do not establish physical light output. WCN7850 is detected over
-  PCIe, but V21 exposes no wireless interface. See [V21 bring-up findings](BRINGUP-STATUS.md)
-  for selected observations, source-audit caveats and concrete questions for reviewers.
+  PCIe, but V21 exposes no wireless interface.
 
 This is not yet a usable, stable desktop or a supported installation. Charging, audio, Wi-Fi
 association, Bluetooth, external DisplayPort, suspend, installation to the internal drive,
